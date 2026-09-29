@@ -105,14 +105,14 @@ codeforcommunities/
 
 ### 1. Dual-Control Maker-Checker Model (`DUTIES.md`)
 Unlike standard generative chatbots that risk hallucinating multi-million rupee budgets, JanSetu AI separates creation from authorization:
-* **Maker (`CitizenAdvocate`):** Powered by Gemini 2.0 Flash (fallback 1.5 Pro), translates citizen distress into a structured capital works project.
+* **Maker (`CitizenAdvocate`):** Powered by Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro), translates citizen distress into a structured capital works project.
 * **Checker (`PolicyAuditor`):** A dedicated sub-agent that verifies adherence to public works rate cards, verifies that the Priority Urgency Score is mathematically correct, checks for PII leaks, and issues a cryptographic seal (`SEAL-XXXXXXXX`).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Citizen as Grassroots Citizen
-    participant Maker as JanSetu Maker (Gemini 2.0 Flash)
+    participant Maker as JanSetu Maker (Gemini 2.5 Flash)
     participant Tools as Deterministic Tool Engine
     participant Checker as PolicyAuditor Checker Sub-Agent
     actor Policy as District Magistrate / Ministry
@@ -135,7 +135,7 @@ $$PUS = \left( 0.35 \times \text{Normalized Demand Volume} + 0.35 \times \text{M
 
 * Ensures remote, impoverished hamlets (high MPI) receive immediate priority even if their raw complaint count is smaller than dense urban wards.
 
-### 3. Google Gemini 2.0 Flash (fallback 1.5 Pro) Integration
+### 3. Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro) Integration
 * **Multilingual Nuance:** Native comprehension of low-resource Indian languages (Hindi, Tamil, Telugu, Bengali, Marathi) and BRICS partner tongues (Portuguese, Russian).
 * **Multimodal Readiness:** Ready to ingest citizen photos of damaged infrastructure (bridges, roads, water treatment plants) via Gemini Vision.
 * **Structured Output Schema:** Enforces strict adherence to JSON schema, feeding directly into administrative dashboards.

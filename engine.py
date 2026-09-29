@@ -1,6 +1,6 @@
 """
 engine.py - Core OpenGAP Runtime Engine for JanSetu AI.
-Powers the Maker-Checker pipeline with Google Gemini 2.0 Flash (fallback 1.5 Pro).
+Powers the Maker-Checker pipeline with Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro).
 Runs seamlessly both with live Gemini API keys and standalone deterministic mode.
 """
 import os
@@ -73,9 +73,9 @@ class JanSetuEngine:
                     print(f"[JanSetu Engine] Connected to Google {self.model_name} via SDK.")
                 except Exception:
                     self.model_name = None
-                    print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
+                    print("[JanSetu Engine] WARNING: Key set but Gemini endpoints unreachable, using deterministic fallback.")
             else:
-                print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
+                print("[JanSetu Engine] WARNING: Key set but Gemini endpoints unreachable, using deterministic fallback.")
         else:
             print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
 
@@ -211,18 +211,26 @@ class JanSetuEngine:
                 2. "policymaker_briefing_memo": A professional 3-sentence executive summary for the District Magistrate / Chief Secretary explaining the infrastructure deficit, demand cluster, and why this ₹{capex_lakh} Lakh investment is recommended.
                 """
                 import urllib.request
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
                 payload = json.dumps({
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {"responseMimeType": "application/json"}
                 }).encode("utf-8")
-                req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": self.api_key
+                }
+                req = urllib.request.Request(url, data=payload, headers=headers)
                 with urllib.request.urlopen(req, timeout=12) as resp:
                     resp_data = json.loads(resp.read().decode("utf-8"))
                     cand = resp_data.get("candidates", [{}])[0]
                     text = cand.get("content", {}).get("parts", [{}])[0].get("text", "").strip()
                     if text:
-                        return json.loads(text)
+                        data = json.loads(text)
+                        if isinstance(data, dict) and data.get("citizen_acknowledgment") and data.get("policymaker_briefing_memo"):
+                            return data
+                        else:
+                            print("[JanSetu Engine] Warning: Gemini JSON missing required keys. Falling back.")
             except Exception as e:
                 print(f"[JanSetu Engine] Fallback to deterministic synthesis: {e}")
 

@@ -54,7 +54,7 @@ Same input always gives the same score, so policymakers can defend every ranking
 
 | Layer | Handled by | Why |
 |---|---|---|
-| Multilingual response generation & policy memo drafting (Hindi, Tamil, Telugu, Bengali, Marathi, Portuguese, English) | **Google Gemini 2.0 Flash (fallback 1.5 Pro)** | Generative, language-sensitive contextual synthesis adapted to regional administrative vernacular |
+| Multilingual response generation & policy memo drafting (Hindi, Tamil, Telugu, Bengali, Marathi, Portuguese, English) | **Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro)** | Generative, language-sensitive contextual synthesis adapted to regional administrative vernacular |
 | Citizen voice transcription | **Browser Web Speech API / WhatsApp voice channel** | Speech-to-text converted client-side before ingestion |
 | Intent extraction, category classification, urgency detection | **Deterministic Python + Gemini** | Keyword and regex matching with LLM augmentation |
 | PII redaction (Aadhaar, phone, email) | **Deterministic Python** (`citizen_ingest_sanitizer.py`) | Regex-based redaction runs *before* any model call; zero model discretion |
@@ -74,7 +74,7 @@ Same input always gives the same score, so policymakers can defend every ranking
 4. **Census/MPI correlation:** Katihar matched to baseline (`IND-BR-01`): Multi-dimensional Poverty Index (MPI) **0.428**, water coverage deficit **47.6%**, classified as an Aspirational District (`CERTIFIED_FOR_GOVERNMENT_ALLOCATION`).
 5. **PUS scoring:** Demand volume (34/50) + MPI (0.428) + Water deficit (0.476) → **PUS = 53.1 / 100**, placing it in Tier-2 High-Priority Capital Works.
 6. **Costing:** Optimizer maps the need to an SoR-priced public work: **Solar-powered Borewell + RO/UV Treatment Plant, ₹8.5 Lakhs** ($10,180 USD), benefiting 2,500 citizens with a Benefit-to-Cost Ratio (BCR) of 294.12.
-7. **Maker (CitizenAdvocate with Gemini 2.0 Flash):** Drafts the proposal and a personalized **Hindi acknowledgment** back to the citizen (`"नमस्ते। आपकी पेयजल एवं स्वच्छता संबंधी मांग जनसेतु प्रणाली में दर्ज कर ली गई है..."`).
+7. **Maker (CitizenAdvocate with Gemini 2.5 Flash):** Drafts the proposal and a personalized **Hindi acknowledgment** back to the citizen (`"नमस्ते। आपकी पेयजल एवं स्वच्छता संबंधी मांग जनसेतु प्रणाली में दर्ज कर ली गई है..."`).
 8. **Checker (PolicyAuditor):** Independently re-computes the PUS formula, verifies budget ceiling, confirms zero PII leakage, validates baseline certification status, and generates a tamper-evident **HMAC-SHA256 seal** (`SEAL-33BAFD9478427850`, production deployments supply the signing key via `JANSETU_AUDIT_KEY` / Cloud KMS) with 0.98 confidence.
 9. **Policymaker dashboard:** District Magistrate sees the live geospatial hotspot, formulaic score breakdown, costed SoR project, and tamper-evident seal.
 
