@@ -1,6 +1,6 @@
 """
 engine.py - Core OpenGAP Runtime Engine for JanSetu AI.
-Powers the Maker-Checker pipeline with Google Gemini 1.5 Pro / Flash.
+Powers the Maker-Checker pipeline with Google Gemini 2.0 Flash (fallback 1.5 Pro).
 Runs seamlessly both with live Gemini API keys and standalone deterministic mode.
 """
 import os
@@ -128,7 +128,8 @@ class JanSetuEngine:
             "estimated_capex_inr": budget_res["estimated_capex_inr"],
             "estimated_beneficiaries": budget_res["estimated_beneficiaries"],
             "recommendation": budget_res["recommended_project_type"],
-            "district": gis_res["district_name"]
+            "district": gis_res["district_name"],
+            "baseline_status": gis_res["status"]
         }
         audit_res = verify_proposal(checker_input)
 

@@ -18,10 +18,11 @@ PHONE_OR_ID_LEAK = re.compile(
 def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
     """
     Audits Maker's output package before dispatch to Policymaker dashboard.
-    1. Independent formula re-computation (PUS math audit)
+    1. Independent formula re-computation (PUS math audit) - fails closed on missing inputs
     2. Deep PII leakage scan
     3. Public works Capex ceiling audit
-    4. Tamper-evident HMAC-SHA256 seal generation
+    4. Tamper-evident HMAC-SHA256 seal generation with key provenance
+    5. Checks baseline certification status
     """
     violations = []
 
@@ -32,12 +33,15 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
 
     pus = maker_proposal.get("priority_urgency_score", 0.0)
 
-    # 2. Independent Mathematical Formula Re-Verification
+    # 2. Independent Mathematical Formula Re-Verification (Fails closed on missing inputs)
     demand_vol = maker_proposal.get("demand_volume")
     mpi = maker_proposal.get("mpi_deprivation")
     deficit = maker_proposal.get("sector_deficit")
 
-    if demand_vol is not None and mpi is not None and deficit is not None:
+    missing = [k for k in ("demand_volume", "mpi_deprivation", "sector_deficit") if maker_proposal.get(k) is None]
+    if missing:
+        violations.append(f"UNVERIFIABLE_INPUTS: Cannot independently recompute PUS; missing {missing}.")
+    else:
         norm_demand = min(1.0, float(demand_vol) / 50.0)
         expected_pus = round(((0.35 * norm_demand) + (0.35 * float(mpi)) + (0.30 * float(deficit))) * 100, 1)
         if abs(expected_pus - pus) > 0.5:
@@ -59,8 +63,18 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
 
     is_passed = len(violations) == 0
 
+    # 6. Out-of-baseline district certification check
+    if is_passed:
+        if maker_proposal.get("baseline_status") == "DISTRICT_NOT_IN_BASELINE":
+            rec_status = "PROVISIONAL_BENCHMARK_ESTIMATE_NOT_CERTIFIED"
+        else:
+            rec_status = "CERTIFIED_FOR_GOVERNMENT_ALLOCATION"
+    else:
+        rec_status = "RECALIBRATION_REQUIRED"
+
     # Cryptographic verification seal (HMAC-SHA256 tamper-evident seal)
-    secret_key = os.getenv("JANSETU_AUDIT_KEY", "JANSETU-OPENGAP-ROOT-GOVERNANCE-KEY").encode('utf-8')
+    key_env = os.getenv("JANSETU_AUDIT_KEY")
+    secret_key = (key_env or "JANSETU-DEMO-KEY-NOT-FOR-PRODUCTION").encode('utf-8')
     payload_bytes = json.dumps(maker_proposal, sort_keys=True).encode('utf-8')
     verification_hash = hmac.new(secret_key, payload_bytes, hashlib.sha256).hexdigest()[:16].upper()
 
@@ -69,10 +83,11 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
         "checker_agent": "PolicyAuditor (verifier)",
         "violations_count": len(violations),
         "violations": violations,
-        "math_recomputed_and_verified": is_passed and (demand_vol is not None),
+        "math_recomputed_and_verified": is_passed and (len(missing) == 0),
         "verification_hash": f"SEAL-{verification_hash}",
+        "seal_key_mode": "env" if key_env else "demo",
         "confidence_score": 0.98 if is_passed else 0.40,
-        "recommendation_status": "CERTIFIED_FOR_GOVERNMENT_ALLOCATION" if is_passed else "RECALIBRATION_REQUIRED"
+        "recommendation_status": rec_status
     }
 
 if __name__ == "__main__":
@@ -84,6 +99,7 @@ if __name__ == "__main__":
         "sector_deficit": 0.476,
         "estimated_capex_inr": 850000,
         "estimated_beneficiaries": 2500,
-        "recommendation": "Deploy Solar Borewell + RO/UV Plant"
+        "recommendation": "Deploy Solar Borewell + RO/UV Plant",
+        "baseline_status": "CORRELATED"
     }
     print(json.dumps(verify_proposal(sample_proposal), indent=2))

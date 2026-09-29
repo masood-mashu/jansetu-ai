@@ -42,7 +42,7 @@ JanSetu AI strictly adheres to the **OpenGAP** git-native specification:
 codeforcommunities/
 │
 │   # ── Core Identity ─────────────────────────────────────
-├── agent.yaml              # Manifest (Gemini 1.5, tools, skills, metadata)
+├── agent.yaml              # Manifest (Gemini 2.0 Flash, tools, skills, metadata)
 ├── SOUL.md                 # Identity, ethos, communication style, civic values
 │
 │   # ── Behavior & Rules ──────────────────────────────────
@@ -105,14 +105,14 @@ codeforcommunities/
 
 ### 1. Dual-Control Maker-Checker Model (`DUTIES.md`)
 Unlike standard generative chatbots that risk hallucinating multi-million rupee budgets, JanSetu AI separates creation from authorization:
-* **Maker (`CitizenAdvocate`):** Powered by Gemini 1.5, translates citizen distress into a structured capital works project.
+* **Maker (`CitizenAdvocate`):** Powered by Gemini 2.0 Flash (fallback 1.5 Pro), translates citizen distress into a structured capital works project.
 * **Checker (`PolicyAuditor`):** A dedicated sub-agent that verifies adherence to public works rate cards, verifies that the Priority Urgency Score is mathematically correct, checks for PII leaks, and issues a cryptographic seal (`SEAL-XXXXXXXX`).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Citizen as Grassroots Citizen
-    participant Maker as JanSetu Maker (Gemini 1.5)
+    participant Maker as JanSetu Maker (Gemini 2.0 Flash)
     participant Tools as Deterministic Tool Engine
     participant Checker as PolicyAuditor Checker Sub-Agent
     actor Policy as District Magistrate / Ministry
@@ -135,7 +135,7 @@ $$PUS = \left( 0.35 \times \text{Normalized Demand Volume} + 0.35 \times \text{M
 
 * Ensures remote, impoverished hamlets (high MPI) receive immediate priority even if their raw complaint count is smaller than dense urban wards.
 
-### 3. Google Gemini 1.5 Pro / Flash Integration
+### 3. Google Gemini 2.0 Flash (fallback 1.5 Pro) Integration
 * **Multilingual Nuance:** Native comprehension of low-resource Indian languages (Hindi, Tamil, Telugu, Bengali, Marathi) and BRICS partner tongues (Portuguese, Russian).
 * **Multimodal Readiness:** Ready to ingest citizen photos of damaged infrastructure (bridges, roads, water treatment plants) via Gemini Vision.
 * **Structured Output Schema:** Enforces strict adherence to JSON schema, feeding directly into administrative dashboards.
@@ -172,7 +172,7 @@ python app.py 8080
 
 | Case | Location & Domain | Citizen Input | Census Grounding | Capex Recommendation | Checker Status |
 |---|---|---|---|---|:---:|
-| **#1** | **Katihar, Bihar**<br>*(Water & Sanitation)* | *"5 days pipeline leak, dirty water in Barari village"* (Hindi) | MPI: 0.428<br>Water Deficit: 47.6% | **Solar Borewell + RO/UV Plant**<br>₹8.5 Lakhs ($10,180 USD) for 2,500 people | `APPROVED`<br>`SEAL-47408EDD9D6A5ADF` |
+| **#1** | **Katihar, Bihar**<br>*(Water & Sanitation)* | *"5 days pipeline leak, dirty water in Barari village"* (Hindi) | MPI: 0.428<br>Water Deficit: 47.6% | **Solar Borewell + RO/UV Plant**<br>₹8.5 Lakhs ($10,180 USD) for 2,500 people | `APPROVED`<br>`SEAL-33BAFD9478427850` |
 | **#2** | **Bahraich, UP**<br>*(Primary Health)* | *"No doctor at Nanpara PHC for 2 weeks"* (Hindi) | MPI: 0.492<br>Doctor Deficit: 54.2% | **Telemedicine Kiosk & Solarization**<br>₹12.5 Lakhs ($14,970 USD) for 8,000 people | `APPROVED`<br>`SEAL-8B29C1F03E4A11D8` |
 | **#3** | **Juazeiro, Brazil**<br>*(Water & Sanitation)* | *"10 days without drinking water in rural settlement"* (Portuguese) | MPI: 0.210<br>Water Deficit: 26.0% | **Artesian Well Network Maintenance**<br>₹8.5 Lakhs ($10,180 USD) for 2,500 people | `APPROVED`<br>`SEAL-E9102B47C539A801` |
 
@@ -181,7 +181,7 @@ python app.py 8080
 ## 🏆 MeitY Digital Public Good (DPG) Alignment
 
 1. **Open Source & Extensible:** Apache 2.0 license with standardized OpenGAP schemas.
-2. **Citizen Privacy by Design:** 100% of PII (Aadhaar, phone numbers) scrubbed at edge before any cloud API call.
+2. **Citizen Privacy by Design:** Regex-based redaction of Aadhaar, phone and email before any model call.
 3. **Non-Discriminatory & Accessible:** Supports voice and text in native regional scripts with browser speech synthesis.
 4. **Institutional Scalability:** Plugs directly into existing e-Governance channels (WhatsApp Citizen Helplines, UMANG, PM GatiShakti National Master Plan).
 
