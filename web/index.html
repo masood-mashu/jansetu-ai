@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JanSetu AI (जनसेतु) — Citizen-to-Governance DPI Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #080C14;
+      --bg-surface: #0E1524;
+      --bg-card: #141E34;
+      --bg-card-hover: #1A2846;
+      --border: #1E2D4A;
+      --border-focus: #3B82F6;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --accent-saffron: #F59E0B;
+      --accent-green: #10B981;
+      --accent-blue: #3B82F6;
+      --accent-red: #EF4444;
+      --accent-purple: #8B5CF6;
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient Header Glow */
+    .header-glow {
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(245, 158, 11, 0.08) 50%, transparent 80%);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(8, 12, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent-saffron), var(--accent-blue));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .brand-tag {
+      font-size: 0.72rem;
+      color: var(--accent-saffron);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(245, 158, 11, 0.12);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-surface);
+      padding: 0.25rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.45rem 1.1rem;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tab-btn:hover { color: var(--text-main); }
+    .tab-btn.active {
+      background: var(--bg-card);
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-green);
+      padding: 0.35rem 0.8rem;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.1); }
+    }
+
+    /* Container */
+    main {
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .view-panel { display: none; }
+    .view-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dual Grid Layout */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .portal-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .glass-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Scenario Quick Chips */
+    .presets-container {
+      margin-bottom: 1.25rem;
+    }
+
+    .presets-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .preset-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-chip:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border-color: var(--accent-blue);
+    }
+
+    /* Input Controls */
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Voice Recording Strip */
+    .voice-strip {
+      background: var(--bg-card);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+
+    .voice-btn {
+      background: var(--accent-red);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: transform 0.2s;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .voice-btn:hover { transform: scale(1.08); }
+    .voice-btn.recording { animation: recording-pulse 1s infinite alternate; }
+
+    @keyframes recording-pulse {
+      from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      to { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+    }
+
+    /* Main Action Button */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent-blue), #2563EB);
+      color: white;
+      border: none;
+      padding: 0.95rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: all 0.25s;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .submit-btn:hover {
+      background: linear-gradient(135deg, #4F46E5, var(--accent-blue));
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* PII Scrubbing Banner */
+    .pii-hud {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      background: rgba(245, 158, 11, 0.08);
+      color: var(--accent-saffron);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+
+    /* Telemetry Output Cards */
+    .telemetry-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .telemetry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .citizen-reply-box {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid var(--accent-green);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+      color: #E2E8F0;
+      margin-bottom: 0.75rem;
+    }
+
+    .policy-memo-box {
+      background: rgba(59, 130, 246, 0.08);
+      border-left: 3px solid var(--accent-blue);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.92rem;
+      color: #E2E8F0;
+      font-family: var(--font-body);
+    }
+
+    /* Metric Badges */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+
+    .metric-box {
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      padding: 0.8rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--accent-saffron);
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Verifier Stamp */
+    .verifier-seal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--accent-green);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-green);
+      margin-top: 1rem;
+    }
+
+    /* Districts Grid */
+    .district-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .district-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .district-card:hover {
+      border-color: var(--accent-saffron);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .district-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.5rem;
+    }
+
+    .district-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .mpi-tag {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.12);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+    }
+
+    .district-stats {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+
+    /* Progress bar */
+    .progress-bar-container {
+      background: var(--bg-base);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-saffron));
+    }
+
+    /* Speech Audio Button */
+    .audio-play-btn {
+      background: transparent;
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .audio-play-btn:hover {
+      background: var(--accent-green);
+      color: #000;
+    }
+
+    /* Architecture Visualizer */
+    .arch-code {
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      background: var(--bg-base);
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      color: #E2E8F0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-glow"></div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">ज</div>
+      <div>
+        <div class="brand-title">JanSetu AI <span class="brand-tag">OpenGAP DPI</span></div>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('citizen-tab')">Citizen Portal</button>
+      <button class="tab-btn" onclick="switchTab('policy-tab')">Policymaker GIS Command</button>
+      <button class="tab-btn" onclick="switchTab('audit-tab')">Audit & Spec Vault</button>
+      <button class="tab-btn" onclick="window.open('/slides.html', '_blank')">Pitch Deck (Slides) ↗</button>
+    </div>
+
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span>Gemini 2.0 Flash • Verifier Online</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: CITIZEN INGESTION PORTAL -->
+    <div id="citizen-tab" class="view-panel active">
+      <div class="portal-grid">
+        <!-- Input Form -->
+        <div class="glass-card">
+          <div class="card-title">
+            <span>🗣️ Citizen Grievance & Demand Ingest</span>
+            <span style="font-size: 0.75rem; color: var(--accent-saffron); font-family: var(--font-mono);">Bhashini Multilingual AI</span>
+          </div>
+
+          <!-- Preset Scenarios -->
+          <div class="presets-container">
+            <div class="presets-label">⚡ Real-world Grassroots Simulation Presets</div>
+            <div class="preset-chips">
+              <button class="preset-chip" onclick="loadPreset('katihar_water')">💧 Katihar Water Contamination (Hindi)</button>
+              <button class="preset-chip" onclick="loadPreset('bahraich_health')">🏥 Bahraich Health Clinic Deficit (Hindi)</button>
+              <button class="preset-chip" onclick="loadPreset('ramanath_power')">⚡ Ramanathapuram Power Outage (Tamil)</button>
+              <button class="preset-chip" onclick="loadPreset('brazil_water')">🌎 Juazeiro Brazil Drought (Portuguese)</button>
+            </div>
+          </div>
+
+          <!-- Voice Strip -->
+          <div class="voice-strip">
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 600;">Voice Input Recording</div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);" id="mic-status">Tap mic to speak in Hindi/Tamil/English...</div>
+            </div>
+            <button class="voice-btn" id="mic-btn" onclick="toggleVoiceRecording()">🎙️</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Raw Citizen Voice Transcript / Text</label>
+            <textarea id="raw-text" rows="4" placeholder="Enter citizen request in Hindi, Tamil, Telugu, English or Portuguese..."></textarea>
+          </div>
+
+          <div class="controls-row">
+            <div>
+              <label class="form-label">Location / District</label>
+              <input type="text" id="location-hint" value="Katihar, Bihar" placeholder="e.g. Katihar, Bahraich, Nuapada">
+            </div>
+            <div>
+              <label class="form-label">Aggregated Demand Volume</label>
+              <input type="number" id="demand-volume" value="28" min="1" max="1000">
+            </div>
+          </div>
+
+          <button class="submit-btn" onclick="submitCitizenDemand()">
+            <span>⚡ Run JanSetu Maker-Checker Pipeline</span>
+          </button>
+
+          <div class="pii-hud" id="pii-hud">
+            <span>🛡️ OpenGAP Invariant Shield:</span>
+            <span id="pii-status">All Aadhaar, CPF IDs, and phone numbers are redacted in-memory.</span>
+          </div>
+        </div>
+
+        <!-- Telemetry Results -->
+        <div class="glass-card" id="results-card">
+          <div class="card-title">
+            <span>📡 Live Execution Telemetry</span>
+            <span style="font-size: 0.75rem; color: var(--accent-green); font-family: var(--font-mono);" id="exec-status">READY</span>
+          </div>
+
+          <div id="results-placeholder" style="text-align: center; padding: 4rem 1rem; color: var(--text-dim);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚖️</div>
+            <div style="font-weight: 600;">No Active Pipeline Execution</div>
+            <div style="font-size: 0.85rem; margin-top: 0.25rem;">Select a preset or enter citizen voice/text to trigger JanSetu.</div>
+          </div>
+
+          <div id="results-content" style="display: none;">
+            <!-- Metrics -->
+            <div class="badge-grid">
+              <div class="metric-box">
+                <div class="metric-val" id="metric-pus">--</div>
+                <div class="metric-label">Priority Score (PUS)</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-val" id="metric-capex" style="color: var(--accent-blue);">--</div>
+                <div class="metric-label">Estimated Capex</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-val" id="metric-ben" style="color: var(--accent-green);">--</div>
+                <div class="metric-label">Beneficiaries</div>
+              </div>
+            </div>
+
+            <!-- Citizen Ack -->
+            <div class="telemetry-card">
+              <div class="telemetry-header">
+                <span>Citizen Vernacular Acknowledgment</span>
+                <span id="ack-lang" style="color: var(--accent-green);">Hindi</span>
+              </div>
+              <div class="citizen-reply-box" id="citizen-ack-text">--</div>
+              <button class="audio-play-btn" onclick="speakCitizenResponse()">🔊 Read Aloud (Native Voice)</button>
+            </div>
+
+            <!-- Policy Memo -->
+            <div class="telemetry-card">
+              <div class="telemetry-header">
+                <span>Executive Policy Briefing (District Magistrate)</span>
+                <span style="color: var(--accent-saffron);">Maker Synthesis</span>
+              </div>
+              <div class="policy-memo-box" id="policy-memo-text">--</div>
+            </div>
+
+            <!-- Verifier Seal -->
+            <div class="verifier-seal">
+              <div>
+                <strong>POLICY AUDITOR CHECKER:</strong>
+                <span id="checker-status">APPROVED</span>
+              </div>
+              <div id="checker-hash">SEAL-XXXXXXXX</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: POLICYMAKER GIS COMMAND CENTER -->
+    <div id="policy-tab" class="view-panel">
+      <div class="glass-card" style="margin-bottom: 1.5rem;">
+        <div class="card-title">
+          <span>🏛️ National Infrastructure Priority Heatmap</span>
+          <span style="font-size: 0.8rem; font-family: var(--font-mono); color: var(--accent-blue);">NITI Aayog & BRICS Aspirational Index</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+          JanSetu correlates real-time citizen demand signals with census baseline deprivation indices to recommend capital works directly to state and union ministries.
+        </p>
+
+        <div class="district-card-grid" id="district-cards-container">
+          <!-- District cards rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: AUDIT & SPEC VAULT -->
+    <div id="audit-tab" class="view-panel">
+      <div class="portal-grid">
+        <div class="glass-card">
+          <div class="card-title">
+            <span>📜 OpenGAP Specification Trees</span>
+            <span style="font-size: 0.75rem; color: var(--accent-saffron); font-family: var(--font-mono);">open-gitagent/opengap</span>
+          </div>
+          <pre class="arch-code">
+jansetu-ai/
+├── agent.yaml              # Manifest (Gemini 1.5, tools, compliance)
+├── SOUL.md                 # Civic Identity & Non-partisan Values
+├── RULES.md                # Hard Invariants (Zero PII, Zero Hallucination)
+├── DUTIES.md               # Maker-Checker Segregation of Duties
+├── AGENTS.md               # Framework-Agnostic Fallback Guide
+├── skills/                 # Multilingual intake & demographic gap skills
+├── tools/                  # Deterministic PII Sanitizer & Capex Optimizer
+├── knowledge/              # BRICS Census & Public Works Schedule of Rates
+├── memory/runtime/         # Context & Cryptographic Audit Dailylog
+└── agents/verifier/        # Independent PolicyAuditor Checker Sub-Agent
+          </pre>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-title">
+            <span>🔐 Cryptographic Audit Trail Stream</span>
+            <button class="audio-play-btn" onclick="fetchAuditLog()">🔄 Refresh Log</button>
+          </div>
+          <pre class="arch-code" id="audit-log-content" style="max-height: 400px; overflow-y: auto;">
+Loading audit log from memory/runtime/dailylog.md...
+          </pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const presets = {
+      katihar_water: {
+        text: "नमस्ते, मेरा नाम रमेश है, फोन 9876543210 और आधार 4589-1234-5678 है। कटिहार के बरारी गांव में पिछले 5 दिन से पीने का पानी नहीं आ रहा है, पाइपलाइन फटी हुई है और बच्चे बीमार पड़ रहे हैं।",
+        loc: "Katihar, Bihar",
+        vol: 34
+      },
+      bahraich_health: {
+        text: "बहराइच के ब्लॉक नानपारा में प्राथमिक स्वास्थ्य केंद्र में 2 हफ्ते से कोई डॉक्टर नहीं है और आवश्यक दवाइयां खत्म हैं। आपातकालीन डिलीवरी के लिए 40 किलोमीटर दूर जाना पड़ता है।",
+        loc: "Bahraich, Uttar Pradesh",
+        vol: 45
+      },
+      ramanath_power: {
+        text: "வணக்கம், ராமநாதபுரம் கிராமத்தில் கடந்த ஒரு வாரமாக மின்தடை ஏற்பட்டுள்ளது. விவசாய பம்புசெட்டுகள் இயங்கவில்லை, அவசரமாக மின்மாற்றி மாற்றப்பட வேண்டும்.",
+        loc: "Ramanathapuram, Tamil Nadu",
+        vol: 22
+      },
+      brazil_water: {
+        text: "Olá, no município de Juazeiro na Bahia estamos sem água potável no assentamento rural há 10 dias. Precisamos urgente de manutenção na rede e poço artesiano.",
+        loc: "Juazeiro, Brazil",
+        vol: 19
+      }
+    };
+
+    function loadPreset(key) {
+      const p = presets[key];
+      if (p) {
+        document.getElementById('raw-text').value = p.text;
+        document.getElementById('location-hint').value = p.loc;
+        document.getElementById('demand-volume').value = p.vol;
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      const activePanel = document.getElementById(tabId);
+      if (activePanel) activePanel.classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabId === 'policy-tab') loadDistricts();
+      if (tabId === 'audit-tab') fetchAuditLog();
+    }
+
+    async function submitCitizenDemand() {
+      const rawText = document.getElementById('raw-text').value.trim();
+      const loc = document.getElementById('location-hint').value.trim();
+      const vol = document.getElementById('demand-volume').value;
+
+      if (!rawText) {
+        alert("Please enter citizen demand text or pick a preset.");
+        return;
+      }
+
+      document.getElementById('exec-status').innerText = "RUNNING OPEN-GAP PIPELINE...";
+      document.getElementById('exec-status').style.color = "var(--accent-saffron)";
+
+      try {
+        const response = await fetch('/api/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            raw_text: rawText,
+            location_hint: loc,
+            demand_volume: parseInt(vol) || 20
+          })
+        });
+
+        const data = await response.json();
+        renderResults(data);
+      } catch (err) {
+        alert("Error executing pipeline: " + err.message);
+        document.getElementById('exec-status').innerText = "ERROR";
+      }
+    }
+
+    function renderResults(data) {
+      document.getElementById('results-placeholder').style.display = 'none';
+      document.getElementById('results-content').style.display = 'block';
+
+      document.getElementById('exec-status').innerText = "VERIFIED BY POLICY AUDITOR";
+      document.getElementById('exec-status').style.color = "var(--accent-green)";
+
+      // Metrics
+      document.getElementById('metric-pus').innerText = data.priority_and_budget.priority_urgency_score + " / 100";
+      const capexLakh = (data.priority_and_budget.estimated_capex_inr / 100000).toFixed(1);
+      document.getElementById('metric-capex').innerText = `₹${capexLakh}L`;
+      document.getElementById('metric-ben').innerText = data.priority_and_budget.estimated_beneficiaries.toLocaleString();
+
+      // Citizen Ack & Memo
+      document.getElementById('citizen-ack-text').innerText = data.maker_synthesis.citizen_acknowledgment;
+      document.getElementById('policy-memo-text').innerText = data.maker_synthesis.policymaker_briefing_memo;
+      document.getElementById('ack-lang').innerText = data.ingestion.detected_language.toUpperCase();
+
+      // PII HUD
+      if (data.ingestion.pii_redacted) {
+        document.getElementById('pii-status').innerText = `🛡️ PII Guard Active: ${data.ingestion.pii_tokens_removed} sensitive token(s) scrubbed at the edge.`;
+      } else {
+        document.getElementById('pii-status').innerText = `🛡️ PII Guard: Zero sensitive tokens detected in input.`;
+      }
+
+      // Verifier Seal
+      document.getElementById('checker-status').innerText = data.checker_audit.status;
+      document.getElementById('checker-hash').innerText = data.checker_audit.verification_hash;
+    }
+
+    function speakCitizenResponse() {
+      const text = document.getElementById('citizen-ack-text').innerText;
+      if (!text || text === '--') return;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("Speech synthesis not supported in this browser.");
+      }
+    }
+
+    let isRecording = false;
+    let recognition = null;
+
+    function toggleVoiceRecording() {
+      const micBtn = document.getElementById('mic-btn');
+      const micStatus = document.getElementById('mic-status');
+
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Speech recognition not supported natively in this browser. Please use the preset buttons or type text.");
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!isRecording) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'hi-IN'; // Default Hindi, also recognizes Indian English
+
+        recognition.onstart = () => {
+          isRecording = true;
+          micBtn.classList.add('recording');
+          micStatus.innerText = "Listening... Speak in Hindi or English now.";
+        };
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          document.getElementById('raw-text').value = transcript;
+        };
+
+        recognition.onerror = (e) => {
+          micStatus.innerText = "Mic error: " + e.error;
+          stopRecording();
+        };
+
+        recognition.onend = () => {
+          stopRecording();
+        };
+
+        recognition.start();
+      } else {
+        if (recognition) recognition.stop();
+        stopRecording();
+      }
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      document.getElementById('mic-btn').classList.remove('recording');
+      document.getElementById('mic-status').innerText = "Voice input ready.";
+    }
+
+    async function loadDistricts() {
+      try {
+        const res = await fetch('/api/districts');
+        const data = await res.json();
+        const container = document.getElementById('district-cards-container');
+        container.innerHTML = "";
+
+        data.districts.forEach(d => {
+          const card = document.createElement('div');
+          card.className = "district-card";
+          card.onclick = () => {
+            document.getElementById('location-hint').value = `${d.name}, ${d.state_province}`;
+            switchTab('citizen-tab');
+          };
+          card.innerHTML = `
+            <div class="district-header">
+              <div class="district-name">${d.name}</div>
+              <div class="mpi-tag">MPI: ${d.mpi_deprivation_index}</div>
+            </div>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.5rem;">${d.state_province}, ${d.country}</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: ${Math.round(d.drinking_water_coverage_pct)}%;"></div>
+            </div>
+            <div class="district-stats">
+              <div>Pop: ${(d.population / 100000).toFixed(1)} Lakh</div>
+              <div>Water Cov: ${d.drinking_water_coverage_pct}%</div>
+              <div>Doctor Deficit: ${d.phc_doctor_deficit_pct}%</div>
+              <div>Budget Util: ${d.historical_budget_utilization_pct}%</div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        console.error("Failed to load districts:", e);
+      }
+    }
+
+    async function fetchAuditLog() {
+      try {
+        const res = await fetch('/api/audit-log');
+        const data = await res.json();
+        document.getElementById('audit-log-content').innerText = data.audit_log_markdown || "No audit log records found.";
+      } catch (e) {
+        document.getElementById('audit-log-content').innerText = "Error loading audit log: " + e.message;
+      }
+    }
+
+    // Auto-load Katihar preset on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('katihar_water');
+    });
+  </script>
+</body>
+</html>

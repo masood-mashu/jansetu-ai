@@ -1,0 +1,60 @@
+tools:
+  - name: citizen-ingest-sanitizer
+    description: Sanitizes raw citizen feedback, speech transcripts, or SMS. Scrubs Aadhaar, phone numbers, and PII. Detects language (Hindi, Tamil, Telugu, Bengali, Portuguese, English) and extracts infrastructure intent and severity.
+    parameters:
+      type: object
+      properties:
+        raw_text:
+          type: string
+          description: Raw vernacular text or transcribed speech audio from citizen.
+        channel:
+          type: string
+          enum: ["voice_note", "sms", "whatsapp_bot", "web_portal"]
+          default: "voice_note"
+        location_hint:
+          type: string
+          description: Location mentioned in query or GPS cell tower district.
+      required:
+        - raw_text
+
+  - name: gis-demographic-correlator
+    description: Cross-references target location with national census demographics, Multi-Dimensional Poverty Index (MPI), and historical infrastructure coverage deficits.
+    parameters:
+      type: object
+      properties:
+        location_name:
+          type: string
+          description: District, taluk, or village name.
+        category:
+          type: string
+          enum: ["Water & Sanitation", "Primary Healthcare", "Rural Connectivity", "Power & Energy", "Education & Digital Literacy"]
+      required:
+        - location_name
+        - category
+
+  - name: priority-budget-optimizer
+    description: Computes deterministic Priority Urgency Score (0-100), estimated capital expenditure (Capex in INR/USD), beneficiaries, and public finance approval tier.
+    parameters:
+      type: object
+      properties:
+        category:
+          type: string
+          description: Infrastructure domain category.
+        mpi_deprivation:
+          type: number
+          description: Multi-dimensional Poverty Index (0.0 to 1.0).
+        sector_deficit:
+          type: number
+          description: Infrastructure deficiency score (0.0 to 1.0).
+        demand_volume:
+          type: integer
+          description: Number of aggregated citizen requests in this cluster.
+          default: 15
+        unit_multiplier:
+          type: number
+          description: Scope sizing factor (e.g. 1.0 for standard installation, 2.5 for multi-village cluster).
+          default: 1.0
+      required:
+        - category
+        - mpi_deprivation
+        - sector_deficit

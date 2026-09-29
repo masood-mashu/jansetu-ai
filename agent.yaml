@@ -1,0 +1,54 @@
+spec_version: "0.1.0"
+name: jansetu-ai
+version: "1.0.0"
+title: "JanSetu AI (जनसेतु) — Citizen-to-Governance DPI Bridge"
+description: "OpenGAP Git-Native Multilingual Digital Public Good powered by Google Gemini, aggregating grassroots citizen infrastructure demands and synthesizing data-backed development priorities for national policymakers."
+author: "JanSetu Core Engineering Team"
+license: "Apache-2.0"
+
+model:
+  preferred: "google:gemini-2.0-flash"
+  fallback:
+    - "google:gemini-1.5-pro"
+    - "google:gemini-1.5-flash"
+  constraints:
+    temperature: 0.2
+    max_tokens: 4096
+
+skills:
+  - multilingual-citizen-intake
+  - demographic-disparity-analyzer
+  - capital-works-prioritizer
+
+tools:
+  - citizen-ingest-sanitizer
+  - gis-demographic-correlator
+  - priority-budget-optimizer
+
+agents:
+  verifier:
+    path: "./agents/verifier"
+    role: "PolicyAuditor (Checker)"
+
+runtime:
+  max_turns: 25
+  timeout: 90
+  memory_retention: "git-commit"
+
+tags:
+  - digital-public-infrastructure
+  - brics-innovation
+  - google-gemini
+  - multilingual-bhashini
+  - meity-dpg
+  - opengap
+  - civic-tech
+
+metadata:
+  track: "Track 1: AI for Digital Public Infrastructure & Governance"
+  brics_pillar: "Innovation"
+  target_demographics: "Rural, Tier-2/3 Municipalities, Underserved Communities"
+  sdg_alignment:
+    - "SDG 9: Industry, Innovation, and Infrastructure"
+    - "SDG 11: Sustainable Cities and Communities"
+    - "SDG 16: Peace, Justice, and Strong Institutions"

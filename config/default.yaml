@@ -1,0 +1,12 @@
+environment: "production"
+log_level: "INFO"
+telemetry:
+  enabled: true
+  provider: "google_cloud_logging"
+runtime:
+  max_concurrency: 5
+  cache_ttl_seconds: 3600
+google_cloud:
+  region: "asia-south1"
+  project_id: "${GOOGLE_CLOUD_PROJECT}"
+  model_id: "gemini-1.5-pro"

@@ -1,0 +1,59 @@
+{
+  "currency": "INR",
+  "schedule_of_rates": [
+    {
+      "category": "Water & Sanitation",
+      "project_type": "Solar Borewell + RO/UV Mini Water Treatment Plant",
+      "unit": "per_installation",
+      "standard_cost_inr": 850000,
+      "estimated_beneficiaries_per_unit": 2500,
+      "lead_time_days": 45,
+      "operational_lifetime_years": 15
+    },
+    {
+      "category": "Water & Sanitation",
+      "project_type": "Piped Village Reticulation Network Repair",
+      "unit": "per_km",
+      "standard_cost_inr": 320000,
+      "estimated_beneficiaries_per_unit": 1200,
+      "lead_time_days": 21,
+      "operational_lifetime_years": 10
+    },
+    {
+      "category": "Primary Healthcare",
+      "project_type": "Primary Health Sub-Centre Solarization & Telemedicine Kiosk",
+      "unit": "per_facility",
+      "standard_cost_inr": 1250000,
+      "estimated_beneficiaries_per_unit": 8000,
+      "lead_time_days": 60,
+      "operational_lifetime_years": 12
+    },
+    {
+      "category": "Rural Connectivity",
+      "project_type": "All-Weather Bituminous Road Linkage",
+      "unit": "per_km",
+      "standard_cost_inr": 4800000,
+      "estimated_beneficiaries_per_unit": 5000,
+      "lead_time_days": 90,
+      "operational_lifetime_years": 8
+    },
+    {
+      "category": "Power & Energy",
+      "project_type": "Off-Grid Community Solar Micro-Grid (25 kWp)",
+      "unit": "per_village",
+      "standard_cost_inr": 2100000,
+      "estimated_beneficiaries_per_unit": 1800,
+      "lead_time_days": 40,
+      "operational_lifetime_years": 20
+    },
+    {
+      "category": "Education & Digital Literacy",
+      "project_type": "Government School Smart Classroom & Solar Power Backup",
+      "unit": "per_school",
+      "standard_cost_inr": 650000,
+      "estimated_beneficiaries_per_unit": 650,
+      "lead_time_days": 30,
+      "operational_lifetime_years": 10
+    }
+  ]
+}
