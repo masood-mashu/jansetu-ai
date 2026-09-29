@@ -29,30 +29,53 @@ except ImportError:
 class JanSetuEngine:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not self.api_key:
+            env_file = os.path.join(BASE_DIR, ".env")
+            if os.path.exists(env_file):
+                try:
+                    with open(env_file, "r", encoding="utf-8") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith("GEMINI_API_KEY="):
+                                self.api_key = line.split("=", 1)[1].strip("'\" ")
+                                os.environ["GEMINI_API_KEY"] = self.api_key
+                                break
+                except Exception:
+                    pass
         self.model = None
         self._init_gemini()
         self._ensure_audit_dirs()
 
     def _init_gemini(self):
-        if self.api_key and HAS_GOOGLE_GENAI:
-            try:
-                genai.configure(api_key=self.api_key)
-                model_name = "gemini-2.0-flash"
+        self.model_name = None
+        if self.api_key:
+            import urllib.request
+            # Auto-detect available live Google Gemini models (compatible with both AIzaSy and AQ keys)
+            for candidate in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{candidate}:generateContent?key={self.api_key}"
                 try:
-                    self.model = genai.GenerativeModel(
-                        model_name=model_name,
-                        system_instruction=self._load_soul_and_rules()
-                    )
+                    test_payload = json.dumps({"contents": [{"parts": [{"text": "ping"}]}]}).encode("utf-8")
+                    req = urllib.request.Request(url, data=test_payload, headers={"Content-Type": "application/json"})
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        if resp.status == 200:
+                            self.model_name = candidate
+                            break
                 except Exception:
-                    model_name = "gemini-1.5-pro"
-                    self.model = genai.GenerativeModel(
-                        model_name=model_name,
-                        system_instruction=self._load_soul_and_rules()
-                    )
-                print(f"[JanSetu Engine] Connected to Google {model_name}.")
-            except Exception as e:
-                print(f"[JanSetu Engine] Warning: Gemini init error ({e}). Using deterministic mode.")
-                self.model = None
+                    continue
+
+            if self.model_name:
+                print(f"[JanSetu Engine] Connected to Google {self.model_name} (Live Cloud Active).")
+            elif HAS_GOOGLE_GENAI:
+                try:
+                    genai.configure(api_key=self.api_key)
+                    self.model_name = "gemini-2.0-flash"
+                    self.model = genai.GenerativeModel(model_name=self.model_name, system_instruction=self._load_soul_and_rules())
+                    print(f"[JanSetu Engine] Connected to Google {self.model_name} via SDK.")
+                except Exception:
+                    self.model_name = None
+                    print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
+            else:
+                print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
         else:
             print("[JanSetu Engine] Standalone OpenGAP deterministic engine active (Live Gemini Ready).")
 
@@ -139,7 +162,7 @@ class JanSetuEngine:
                 "system": "JanSetu AI (जनसेतु)",
                 "spec": "OpenGAP v0.1.0",
                 "timestamp": timestamp,
-                "model_engine": "google:gemini-2.0-flash" if self.model else "opengap:deterministic-engine",
+                "model_engine": f"google:{self.model_name}" if self.model_name else "opengap:deterministic-engine",
                 "verification_seal": audit_res["verification_hash"]
             },
             "ingestion": ingest_res,
@@ -172,7 +195,7 @@ class JanSetuEngine:
         proj_type = budget_data["recommended_project_type"]
         beneficiaries = budget_data["estimated_beneficiaries"]
 
-        if self.model:
+        if self.model_name and self.api_key:
             try:
                 prompt = f"""
                 You are JanSetu AI, speaking to a citizen and a district magistrate.
@@ -187,14 +210,19 @@ class JanSetuEngine:
                 1. "citizen_acknowledgment": Warm, respectful confirmation in {language} confirming that their grievance has been logged, geotagged to {district}, and escalated with priority tier {budget_data['priority_band']}.
                 2. "policymaker_briefing_memo": A professional 3-sentence executive summary for the District Magistrate / Chief Secretary explaining the infrastructure deficit, demand cluster, and why this ₹{capex_lakh} Lakh investment is recommended.
                 """
-                response = self.model.generate_content(prompt)
-                text = response.text.strip()
-                # Parse JSON if enclosed in markdown
-                if "```json" in text:
-                    text = text.split("```json")[1].split("```")[0].strip()
-                elif "```" in text:
-                    text = text.split("```")[1].split("```")[0].strip()
-                return json.loads(text)
+                import urllib.request
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+                payload = json.dumps({
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"responseMimeType": "application/json"}
+                }).encode("utf-8")
+                req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=12) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    cand = resp_data.get("candidates", [{}])[0]
+                    text = cand.get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                    if text:
+                        return json.loads(text)
             except Exception as e:
                 print(f"[JanSetu Engine] Fallback to deterministic synthesis: {e}")
 
