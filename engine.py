@@ -78,7 +78,7 @@ class JanSetuEngine:
         raw_text: str,
         channel: str = "voice_note",
         location_hint: str = "",
-        demand_volume: int = 18
+        demand_volume: int = 34
     ) -> Dict[str, Any]:
         """
         Full OpenGAP Maker-Checker pipeline:
@@ -122,6 +122,9 @@ class JanSetuEngine:
         checker_input = {
             "citizen_text": ingest_res["sanitized_text"],
             "priority_urgency_score": budget_res["priority_urgency_score"],
+            "demand_volume": demand_volume,
+            "mpi_deprivation": gis_res["mpi_deprivation_index"],
+            "sector_deficit": gis_res["sector_deficit_score"],
             "estimated_capex_inr": budget_res["estimated_capex_inr"],
             "estimated_beneficiaries": budget_res["estimated_beneficiaries"],
             "recommendation": budget_res["recommended_project_type"],
@@ -195,8 +198,16 @@ class JanSetuEngine:
                 print(f"[JanSetu Engine] Fallback to deterministic synthesis: {e}")
 
         # Deterministic multilingual generator
+        hi_cat_map = {
+            "Water & Sanitation": "पेयजल एवं स्वच्छता",
+            "Primary Healthcare": "प्राथमिक स्वास्थ्य",
+            "Rural Connectivity": "ग्रामीण सड़क संपर्क",
+            "Power & Energy": "विद्युत आपूर्ति",
+            "Education & Digital Literacy": "शिक्षा एवं डिजिटल साक्षरता"
+        }
+        localized_cat = hi_cat_map.get(category, category)
         if language == "hi":
-            citizen_ack = f"नमस्ते। आपकी {category} संबंधी मांग जनसेतु प्रणाली में दर्ज कर ली गई है। आपका क्षेत्र {district}, {state} हमारे उच्च प्राथमिकता डैशबोर्ड में सम्मिलित है। आपकी समस्या को प्राथमिकता स्कोर {pus}/100 के साथ जिला प्रशासन को त्वरित कार्रवाई हेतु अग्रसारित कर दिया गया है।"
+            citizen_ack = f"नमस्ते। आपकी {localized_cat} संबंधी मांग जनसेतु प्रणाली में दर्ज कर ली गई है। आपका क्षेत्र {district}, {state} हमारे प्राथमिकता डैशबोर्ड में सम्मिलित है। आपकी समस्या को प्राथमिकता स्कोर {pus}/100 ({budget_data['priority_band']}) के साथ जिला प्रशासन को कार्रवाई हेतु प्रेषित कर दिया गया है।"
         elif language == "ta":
             citizen_ack = f"வணக்கம். உங்கள் {category} கோரிக்கை ஜனசேது அமைப்பில் பதிவு செய்யப்பட்டுள்ளது. {district}, {state} பகுதிக்கான முன்னுரிமை மதிப்பெண் {pus}/100 ஆக கணக்கிடப்பட்டு மாவட்ட நிர்வாகத்திற்கு அனுப்பப்பட்டுள்ளது."
         elif language == "te":
@@ -206,10 +217,11 @@ class JanSetuEngine:
         else:
             citizen_ack = f"Greetings. Your citizen request regarding {category} in {district}, {state} has been securely registered on the JanSetu Digital Public Infrastructure platform. It has been awarded a Priority Urgency Score of {pus}/100 and routed to the public works division."
 
+        tier_tag = "CRITICAL FAST-TRACK PROPOSAL" if pus >= 70.0 else ("PRIORITY CAPITAL WORKS PROPOSAL" if pus >= 50.0 else "MUNICIPAL WORKS PROPOSAL")
         policy_memo = (
-            f"URGENT PROJECT PROPOSAL: Rapid demand spike detected in {district}, {state} (MPI Deprivation Index: {gis_data['mpi_deprivation_index']}). "
-            f"JanSetu recommends immediate capital provisioning for '{proj_type}' with an estimated capex of ₹{capex_lakh} Lakhs ($ {budget_data['estimated_capex_usd']:,} USD), "
-            f"directly benefiting {beneficiaries:,} citizens with an exceptional Benefit-Cost Ratio of {budget_data['benefit_cost_ratio_index']}."
+            f"{tier_tag}: Demand cluster detected in {district}, {state} (MPI Deprivation Index: {gis_data['mpi_deprivation_index']}). "
+            f"JanSetu recommends capital provisioning for '{proj_type}' with an estimated capex of ₹{capex_lakh} Lakhs ($ {budget_data['estimated_capex_usd']:,} USD), "
+            f"directly benefiting {beneficiaries:,} citizens with a Benefit-Cost Ratio of {budget_data['benefit_cost_ratio_index']}."
         )
 
         return {

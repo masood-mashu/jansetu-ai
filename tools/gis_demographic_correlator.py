@@ -30,9 +30,24 @@ def correlate_district_demographics(location_name: str, category: str = "Water &
             matched = d
             break
 
-    # Fallback to default high-vulnerability district if not found
+    # If not matched in pilot baseline, return benchmark average with clear status flag
     if not matched:
-        matched = districts[0] # Katihar, Bihar as default aspirational district
+        return {
+            "status": "DISTRICT_NOT_IN_BASELINE",
+            "pilot_notice": f"Location '{location_name}' outside 6-district pilot dataset. Applied national baseline benchmarks.",
+            "district_id": "PILOT-BENCHMARK-AVG",
+            "district_name": location_name.title() if location_name else "National Pilot Benchmark",
+            "state_province": "Pilot Benchmark",
+            "country": "India",
+            "total_population": 1500000,
+            "rural_percentage": 75.0,
+            "mpi_deprivation_index": 0.280,
+            "sector_evaluated": category,
+            "sector_deficit_score": 0.400,
+            "budget_utilization_track_record": 80.0,
+            "coordinates": {"lat": 20.5937, "lng": 78.9629},
+            "is_aspirational_priority": False
+        }
 
     # Determine Sector Deficit Index (0.0 to 1.0)
     deficit_score = 0.5

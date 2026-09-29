@@ -7,8 +7,11 @@ import re
 import json
 from typing import Dict, Any, List
 
-# Indian & International phone regex
-PHONE_PATTERN = re.compile(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b[6-9]\d{9}\b')
+# Indian & International phone regex (handles +91, 0-prefixed, and spaced 5+5 numbers)
+PHONE_PATTERN = re.compile(
+    r'(?:(?:\+|00)?91[\s.-]?)?(?:[6-9]\d{4}[\s.-]?\d{5}|0?[6-9]\d{9})\b|'
+    r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}'
+)
 # Aadhaar 12-digit pattern (with optional spaces or dashes)
 AADHAAR_PATTERN = re.compile(r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}\b')
 # Email pattern
@@ -121,9 +124,11 @@ def sanitize_and_parse_request(raw_text: str, channel: str = "voice_note", locat
 
     # Severity Heuristics
     urgency = "MEDIUM"
-    critical_terms = ["emergency", "death", "hospital", "dying", "accident", "days without", "contaminated",
-                      "गंभीर", "मौत", "दुर्घटना", "बीमार", "अस्पताल", "चार दिन से", "हफ्तों से", "urgência", "perigo"]
-    if any(term in lower_text for term in critical_terms):
+    critical_terms = ["emergency", "death", "hospital", "dying", "accident", "contaminated",
+                      "गंभीर", "मौत", "दुर्घटना", "बीमार", "अस्पताल", "urgência", "perigo"]
+    # Regex for duration expressions like "5 दिन से", "3 weeks", "हफ़्तों से"
+    duration_match = bool(re.search(r'(\d+|चार|पाँच|पांच|कई|हफ्तों|हफ़्तों)\s*(दिन|दिनों|हफ्ते|हफ़्ते|घंटे|घंटों|days?|weeks?|horas?|dias?)\s*(से|without|sem)', lower_text))
+    if any(term in lower_text for term in critical_terms) or duration_match:
         urgency = "HIGH"
 
     return {

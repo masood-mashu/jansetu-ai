@@ -64,7 +64,7 @@ class JanSetuHandler(SimpleHTTPRequestHandler):
             raw_text = payload.get("raw_text", "")
             channel = payload.get("channel", "voice_note")
             location_hint = payload.get("location_hint", "")
-            demand_volume = int(payload.get("demand_volume", 20))
+            demand_volume = int(payload.get("demand_volume", 34))
 
             if not raw_text:
                 self._send_json({"error": "raw_text parameter is required"}, status=400)
