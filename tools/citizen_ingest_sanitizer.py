@@ -16,6 +16,9 @@ PHONE_PATTERN = re.compile(
 AADHAAR_PATTERN = re.compile(r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}\b')
 # Email pattern
 EMAIL_PATTERN = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+# Conservative PII patterns for explicit self-identification/address labels.
+NAME_PATTERN = re.compile(r'(?i)(?:my\s+name\s+is|i\s+am|meu\s+nome\s+é|मेरा\s+नाम)\s*[:：-]?\s*[^,;\n]{2,60}')
+ADDRESS_PATTERN = re.compile(r'(?i)(?:address|residence|house\s*(?:no|number)?|h\.?\s*no\.?|flat\s*(?:no|number)?|मकान\s*नंबर|पता)\s*[:：#-]?\s*[^,;\n]{3,100}')
 
 # Multilingual keywords dictionary
 CATEGORY_KEYWORDS = {
@@ -108,6 +111,13 @@ def sanitize_and_parse_request(raw_text: str, channel: str = "voice_note", locat
         pii_redacted_count += 1
         return "[EMAIL_REDACTED]"
     scrubbed_text = EMAIL_PATTERN.sub(replace_email, scrubbed_text)
+
+    def replace_sensitive_label(match):
+        nonlocal pii_redacted_count
+        pii_redacted_count += 1
+        return "[PERSONAL_DETAIL_REDACTED]"
+    scrubbed_text = NAME_PATTERN.sub(replace_sensitive_label, scrubbed_text)
+    scrubbed_text = ADDRESS_PATTERN.sub(replace_sensitive_label, scrubbed_text)
 
     # Detect language
     lang = detect_language(raw_text)

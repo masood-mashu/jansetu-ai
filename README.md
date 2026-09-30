@@ -5,7 +5,7 @@
 [![Track](https://img.shields.io/badge/Track%201-DPI%20%26%20Governance-F59E0B.svg)](#)
 [![BRICS Pillar](https://img.shields.io/badge/BRICS%20Pillar-Innovation-10B981.svg)](#)
 [![Standard](https://img.shields.io/badge/Agent%20Standard-OpenGAP%20v0.1.0-8B5CF6.svg)](https://github.com/open-gitagent/opengap)
-[![Model](https://img.shields.io/badge/AI%20Engine-Google%20Gemini%202.0%20Flash-EA4335.svg)](#)
+[![Model](https://img.shields.io/badge/AI%20Engine-Google%20Gemini%202.5%20Flash%20%E2%86%92%202.0%20Flash-EA4335.svg)](#)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ---
@@ -42,7 +42,7 @@ JanSetu AI strictly adheres to the **OpenGAP** git-native specification:
 codeforcommunities/
 │
 │   # ── Core Identity ─────────────────────────────────────
-├── agent.yaml              # Manifest (Gemini 2.0 Flash, tools, skills, metadata)
+├── agent.yaml              # Manifest (Gemini 2.5 Flash → 2.0 Flash → 1.5 Pro)
 ├── SOUL.md                 # Identity, ethos, communication style, civic values
 │
 │   # ── Behavior & Rules ──────────────────────────────────
@@ -106,7 +106,7 @@ codeforcommunities/
 ### 1. Dual-Control Maker-Checker Model (`DUTIES.md`)
 Unlike standard generative chatbots that risk hallucinating multi-million rupee budgets, JanSetu AI separates creation from authorization:
 * **Maker (`CitizenAdvocate`):** Powered by Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro), translates citizen distress into a structured capital works project.
-* **Checker (`PolicyAuditor`):** A dedicated sub-agent that verifies adherence to public works rate cards, verifies that the Priority Urgency Score is mathematically correct, checks for PII leaks, and issues a cryptographic seal (`SEAL-XXXXXXXX`).
+* **Checker (`PolicyAuditor`):** A dedicated sub-agent that verifies the selected demo rate-card item, recomputes the Priority Urgency Score, checks for common PII leaks, and issues a provisional cryptographic seal (`SEAL-XXXXXXXX`). A human officer remains the allocation authority.
 
 ```mermaid
 sequenceDiagram
@@ -135,7 +135,12 @@ $$PUS = \left( 0.35 \times \text{Normalized Demand Volume} + 0.35 \times \text{M
 
 * Ensures remote, impoverished hamlets (high MPI) receive immediate priority even if their raw complaint count is smaller than dense urban wards.
 
-### 3. Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro) Integration
+### 3. Track 1 Integration Surfaces
+* **Messaging adapter:** `POST /api/webhook/whatsapp` accepts a WhatsApp Cloud-style payload; `POST /api/webhook/twilio` accepts Twilio SMS-style form or JSON payloads. Configure `JANSETU_WEBHOOK_SECRET` to require an `X-JanSetu-Signature: sha256=...` HMAC header. Local demo mode hashes sender tokens and never forwards them to the model.
+* **Demand hotspots:** `GET /api/hotspots` aggregates sanitized `.gitagent/demand_events.jsonl` records by district and category, exposing request count, Checker-approved count, average PUS, channels, coordinates, and deterministic capex.
+* **Scheme mapping:** Every costed recommendation includes a curated `scheme_mapping` from `knowledge/public_investment_schemes.json`. It is a review routing aid with source references, never an automatic approval.
+
+### 4. Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro) Integration
 * **Multilingual Nuance:** Native comprehension of low-resource Indian languages (Hindi, Tamil, Telugu, Bengali, Marathi) and BRICS partner tongues (Portuguese, Russian).
 * **Multimodal Readiness:** Ready to ingest citizen photos of damaged infrastructure (bridges, roads, water treatment plants) via Gemini Vision.
 * **Structured Output Schema:** Enforces strict adherence to JSON schema, feeding directly into administrative dashboards.

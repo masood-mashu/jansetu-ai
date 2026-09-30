@@ -58,3 +58,42 @@ tools:
         - category
         - mpi_deprivation
         - sector_deficit
+
+  - name: messaging-webhook-adapter
+    description: Normalizes WhatsApp Cloud, Twilio SMS, and generic messaging webhook payloads into a PII-safe citizen intake record. Sender identifiers are hashed at the edge.
+    parameters:
+      type: object
+      properties:
+        provider:
+          type: string
+          enum: [whatsapp, twilio, generic]
+        payload:
+          type: object
+      required:
+        - provider
+        - payload
+
+  - name: demand-hotspot-aggregator
+    description: Aggregates sanitized demand events by district and infrastructure category, preserving request counts, verified counts, PUS, channels, coordinates, and deterministic capex.
+    parameters:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 20
+
+  - name: public-investment-mapper
+    description: Maps a costed infrastructure category to a curated public investment scheme for human review; it never approves or allocates funds.
+    parameters:
+      type: object
+      properties:
+        category:
+          type: string
+        priority_band:
+          type: string
+        baseline_status:
+          type: string
+      required:
+        - category
+        - priority_band
+        - baseline_status

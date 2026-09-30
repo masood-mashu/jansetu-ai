@@ -8,6 +8,7 @@ import re
 import json
 import hmac
 import hashlib
+import math
 from typing import Dict, Any
 
 PHONE_OR_ID_LEAK = re.compile(
@@ -26,8 +27,17 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
     """
     violations = []
 
+    # Reject non-finite or out-of-domain numeric inputs before any approval.
+    for field in ("mpi_deprivation", "sector_deficit"):
+        value = maker_proposal.get(field)
+        if value is None or not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)) or not 0.0 <= float(value) <= 1.0:
+            violations.append(f"INVALID_INPUT: {field} must be a finite number in [0.0, 1.0].")
+    demand_value = maker_proposal.get("demand_volume")
+    if demand_value is None or not isinstance(demand_value, int) or isinstance(demand_value, bool) or demand_value < 0:
+        violations.append("INVALID_INPUT: demand_volume must be a non-negative integer.")
+
     # 1. Check for PII leakage in sanitized text or response
-    text_to_check = str(maker_proposal.get("citizen_text", "")) + " " + str(maker_proposal.get("recommendation", ""))
+    text_to_check = " ".join(str(maker_proposal.get(key, "")) for key in ("citizen_text", "recommendation", "maker_synthesis"))
     if PHONE_OR_ID_LEAK.search(text_to_check):
         violations.append("CRITICAL_SECURITY_LEAK: Unmasked phone or national ID detected in proposal payload.")
 
@@ -61,6 +71,24 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
     if beneficiaries <= 0:
         violations.append("DEMOGRAPHIC_ERROR: Zero or negative beneficiaries projected.")
 
+    # Validate the selected project and cost against the versioned Schedule of Rates.
+    try:
+        sor_path = os.path.join(os.path.dirname(__file__), "..", "..", "knowledge", "infrastructure_sor_rates.json")
+        with open(sor_path, "r", encoding="utf-8") as f:
+            rates = json.load(f).get("schedule_of_rates", [])
+        matching_rate = next((r for r in rates if r.get("project_type") == maker_proposal.get("recommendation")), None)
+        if matching_rate is None:
+            violations.append("SCHEDULE_OF_RATES_MISMATCH: Recommendation is not in the approved rate card.")
+        else:
+            if maker_proposal.get("category") != matching_rate.get("category"):
+                violations.append("SCHEDULE_OF_RATES_MISMATCH: Recommendation category does not match the selected rate-card item.")
+            if maker_proposal.get("estimated_capex_inr") != matching_rate.get("standard_cost_inr"):
+                violations.append("SCHEDULE_OF_RATES_MISMATCH: Capex does not match the selected rate-card item.")
+            if maker_proposal.get("estimated_beneficiaries") != matching_rate.get("estimated_beneficiaries_per_unit"):
+                violations.append("SCHEDULE_OF_RATES_MISMATCH: Beneficiary estimate does not match the selected rate-card item.")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        violations.append("UNVERIFIABLE_RATE_CARD: Schedule of Rates could not be loaded.")
+
     is_passed = len(violations) == 0
 
     # 6. Out-of-baseline district certification check
@@ -87,12 +115,14 @@ def verify_proposal(maker_proposal: Dict[str, Any]) -> Dict[str, Any]:
         "verification_hash": f"SEAL-{verification_hash}",
         "seal_key_mode": "env" if key_env else "demo",
         "confidence_score": 0.98 if is_passed else 0.40,
-        "recommendation_status": rec_status
+        "recommendation_status": rec_status,
+        "allocation_authority": "human_officer_required",
     }
 
 if __name__ == "__main__":
     sample_proposal = {
         "citizen_text": "Sanitized pipeline request at Katihar",
+        "category": "Water & Sanitation",
         "priority_urgency_score": 53.1,
         "demand_volume": 34,
         "mpi_deprivation": 0.428,

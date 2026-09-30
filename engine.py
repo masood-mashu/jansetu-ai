@@ -8,6 +8,7 @@ import sys
 import json
 import time
 import datetime
+import hashlib
 from typing import Dict, Any, Optional
 
 # Ensure tools and agents are on sys.path
@@ -17,6 +18,7 @@ sys.path.append(BASE_DIR)
 from tools.citizen_ingest_sanitizer import sanitize_and_parse_request
 from tools.gis_demographic_correlator import correlate_district_demographics
 from tools.priority_budget_optimizer import optimize_priority_and_budget
+from tools.public_investment_mapper import map_public_investment_scheme
 from agents.verifier.audit_checker import verify_proposal
 
 # Google Generative AI optional import
@@ -51,7 +53,7 @@ class JanSetuEngine:
         if self.api_key:
             import urllib.request
             # Auto-detect available live Google Gemini models (compatible with both AIzaSy and AQ keys)
-            for candidate in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]:
+            for candidate in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-flash-latest"]:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{candidate}:generateContent?key={self.api_key}"
                 try:
                     test_payload = json.dumps({"contents": [{"parts": [{"text": "ping"}]}]}).encode("utf-8")
@@ -130,6 +132,11 @@ class JanSetuEngine:
             sector_deficit=gis_res["sector_deficit_score"],
             demand_volume=demand_volume
         )
+        budget_res["scheme_mapping"] = map_public_investment_scheme(
+            detected_cat,
+            budget_res["priority_band"],
+            gis_res["status"],
+        )
 
         # Step 4: Maker Synthesis (Gemini or Native Expert Synthesis)
         maker_synthesis = self._synthesize_advisory(
@@ -144,6 +151,8 @@ class JanSetuEngine:
         # Step 5: Checker Sub-Agent Verification (Segregation of Duties)
         checker_input = {
             "citizen_text": ingest_res["sanitized_text"],
+            "maker_synthesis": maker_synthesis,
+            "category": detected_cat,
             "priority_urgency_score": budget_res["priority_urgency_score"],
             "demand_volume": demand_volume,
             "mpi_deprivation": gis_res["mpi_deprivation_index"],
@@ -194,6 +203,8 @@ class JanSetuEngine:
         capex_lakh = round(capex_inr / 100000, 2)
         proj_type = budget_data["recommended_project_type"]
         beneficiaries = budget_data["estimated_beneficiaries"]
+        scheme = budget_data.get("scheme_mapping", {})
+        scheme_name = scheme.get("scheme_name", "scheme review required")
 
         if self.model_name and self.api_key:
             try:
@@ -205,6 +216,7 @@ class JanSetuEngine:
                 Category: {category}
                 Priority Urgency Score: {pus}/100
                 Recommended Project: {proj_type} (Capex: ₹{capex_lakh} Lakhs for {beneficiaries} citizens)
+                Public Investment Scheme Mapping: {scheme_name}
 
                 Generate a JSON object with:
                 1. "citizen_acknowledgment": Warm, respectful confirmation in {language} confirming that their grievance has been logged, geotagged to {district}, and escalated with priority tier {budget_data['priority_band']}.
@@ -258,7 +270,8 @@ class JanSetuEngine:
         policy_memo = (
             f"{tier_tag}: Demand cluster detected in {district}, {state} (MPI Deprivation Index: {gis_data['mpi_deprivation_index']}). "
             f"JanSetu recommends capital provisioning for '{proj_type}' with an estimated capex of ₹{capex_lakh} Lakhs ($ {budget_data['estimated_capex_usd']:,} USD), "
-            f"directly benefiting {beneficiaries:,} citizens with a Benefit-Cost Ratio of {budget_data['benefit_cost_ratio_index']}."
+            f"mapped for review against '{scheme_name}' ({scheme.get('scheme_id', 'NO_CURATED_MATCH')}). "
+            f"The proposal directly benefits {beneficiaries:,} citizens with a Benefit-Cost Ratio of {budget_data['benefit_cost_ratio_index']}."
         )
 
         return {
@@ -268,12 +281,47 @@ class JanSetuEngine:
 
     def _record_audit_log(self, record: Dict[str, Any]):
         log_file = os.path.join(BASE_DIR, "memory", "runtime", "dailylog.md")
+        audit_payload = {
+            "ingestion": record["ingestion"],
+            "demographic_context": record["demographic_context"],
+            "priority_and_budget": record["priority_and_budget"],
+            "checker_audit": record["checker_audit"],
+        }
+        input_hash = hashlib.sha256(json.dumps(audit_payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+        reasoning_trace = (
+            f"category={record['ingestion']['detected_category']}; "
+            f"baseline={record['demographic_context']['status']}; "
+            f"pus={record['priority_and_budget']['priority_urgency_score']}; "
+            f"checker={record['checker_audit']['status']}"
+        )
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(f"\n### Execution [{record['metadata']['timestamp']}] Seal: {record['metadata']['verification_seal']}\n")
+            f.write(f"- **Input/decision hash:** `{input_hash}`\n")
+            f.write(f"- **Reasoning trace:** `{reasoning_trace}`\n")
             f.write(f"- **District:** {record['demographic_context']['district_name']}, {record['demographic_context']['state_province']}\n")
             f.write(f"- **Category:** {record['ingestion']['detected_category']} (Urgency: {record['priority_and_budget']['priority_urgency_score']}/100)\n")
             f.write(f"- **Capex:** ₹{record['priority_and_budget']['estimated_capex_inr']:,} INR | Beneficiaries: {record['priority_and_budget']['estimated_beneficiaries']:,}\n")
             f.write(f"- **Checker Status:** {record['checker_audit']['status']} ({record['checker_audit']['verification_hash']})\n")
+            f.write("- **Authority:** Human officer approval required; this is not an automatic allocation.\n")
+
+        # A separate, sanitized event stream powers demand-hotspot aggregation.
+        # It intentionally excludes raw citizen text and all contact tokens.
+        events_file = os.path.join(BASE_DIR, ".gitagent", "demand_events.jsonl")
+        event = {
+            "event_id": record["metadata"]["verification_seal"],
+            "timestamp": record["metadata"]["timestamp"],
+            "district_id": record["demographic_context"]["district_id"],
+            "district_name": record["demographic_context"]["district_name"],
+            "category": record["ingestion"]["detected_category"],
+            "channel": record["ingestion"]["channel"],
+            "demand_volume": record["priority_and_budget"].get("demand_volume", 0),
+            "priority_urgency_score": record["priority_and_budget"]["priority_urgency_score"],
+            "estimated_capex_inr": record["priority_and_budget"]["estimated_capex_inr"],
+            "checker_status": record["checker_audit"]["status"],
+            "coordinates": record["demographic_context"].get("coordinates"),
+        }
+        with open(events_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
 
 if __name__ == "__main__":
     engine = JanSetuEngine()

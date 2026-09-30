@@ -9,5 +9,5 @@ runtime:
 google_cloud:
   region: "asia-south1"
   project_id: "${GOOGLE_CLOUD_PROJECT}"
-  model_id: "gemini-2.0-flash"
-  fallback_model_id: "gemini-1.5-pro"
+  model_id: "gemini-2.5-flash"
+  fallback_model_id: "gemini-2.0-flash"

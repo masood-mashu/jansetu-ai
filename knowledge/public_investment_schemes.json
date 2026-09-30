@@ -1,0 +1,41 @@
+{
+  "version": "2026.09-demo",
+  "source_note": "Curated pilot mapping for demo routing; not an automatic funding approval.",
+  "schemes": {
+    "Water & Sanitation": {
+      "scheme_id": "JJM-RURAL-WATER",
+      "scheme_name": "Jal Jeevan Mission — Rural Water Supply",
+      "admin_level": "Union / State / District",
+      "eligibility_signal": "rural drinking-water coverage deficit",
+      "source_reference": "https://jaljeevanmission.gov.in/"
+    },
+    "Primary Healthcare": {
+      "scheme_id": "NHM-PHC",
+      "scheme_name": "National Health Mission — Primary Healthcare",
+      "admin_level": "Union / State / District",
+      "eligibility_signal": "public primary-health facility and staffing deficit",
+      "source_reference": "https://nhm.gov.in/"
+    },
+    "Rural Connectivity": {
+      "scheme_id": "PMGSY-RURAL-ROAD",
+      "scheme_name": "Pradhan Mantri Gram Sadak Yojana",
+      "admin_level": "Union / State / District",
+      "eligibility_signal": "unconnected or low-connectivity rural habitation",
+      "source_reference": "https://pmgsy.nic.in/"
+    },
+    "Power & Energy": {
+      "scheme_id": "RDSS-DISTRIBUTION",
+      "scheme_name": "Revamped Distribution Sector Scheme",
+      "admin_level": "Union / State utility",
+      "eligibility_signal": "distribution reliability or transformer deficit",
+      "source_reference": "https://rdss.gov.in/"
+    },
+    "Education & Digital Literacy": {
+      "scheme_id": "SAMAGRA-SHIKSHA",
+      "scheme_name": "Samagra Shiksha",
+      "admin_level": "Union / State / District",
+      "eligibility_signal": "government school infrastructure and digital-learning gap",
+      "source_reference": "https://samagra.education.gov.in/"
+    }
+  }
+}

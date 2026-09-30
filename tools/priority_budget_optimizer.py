@@ -23,6 +23,14 @@ def optimize_priority_and_budget(
     """
     Computes deterministic priority score and budget sizing according to public finance schedules.
     """
+    if not isinstance(demand_volume, int) or isinstance(demand_volume, bool) or demand_volume < 0:
+        raise ValueError("demand_volume must be a non-negative integer")
+    if not 0.0 <= float(mpi_deprivation) <= 1.0:
+        raise ValueError("mpi_deprivation must be between 0.0 and 1.0")
+    if not 0.0 <= float(sector_deficit) <= 1.0:
+        raise ValueError("sector_deficit must be between 0.0 and 1.0")
+    if not 0.0 < float(unit_multiplier) <= 100.0:
+        raise ValueError("unit_multiplier must be greater than 0 and at most 100")
     sor_db = load_sor_database()
     rates = sor_db.get("schedule_of_rates", [])
 
@@ -75,6 +83,8 @@ def optimize_priority_and_budget(
         "benefit_cost_ratio_index": bcr_index,
         "lead_time_days": matched_sor["lead_time_days"],
         "operational_lifetime_years": matched_sor["operational_lifetime_years"],
+        "demand_volume": demand_volume,
+        "unit_multiplier": unit_multiplier,
         "audit_hash_input": f"{category}:{mpi_deprivation}:{sector_deficit}:{demand_volume}"
     }
 

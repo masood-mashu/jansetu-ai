@@ -11,7 +11,7 @@
 
 ## 2. Short Summary (~85 words)
 
-JanSetu AI is an open-source, multilingual Digital Public Good that converts citizen voice and text requests into verified capital-works recommendations. Gemini handles vernacular understanding across 7 languages; deterministic OpenGAP Python tools handle PII redaction, NITI Aayog MPI correlation and Schedule-of-Rates costing. A Maker-Checker design has a Gemini-powered advocate propose projects and an independent PolicyAuditor verify the math, check for PII leaks and issue a tamper-evident SEAL. Policymakers get ranked demand hotspots with auditable justification, built for Aspirational Districts and BRICS-scale reuse.
+JanSetu AI is an open-source, multilingual Digital Public Good that converts citizen voice and text requests into provisional capital-works recommendations. Gemini handles vernacular understanding; deterministic OpenGAP Python tools handle PII redaction, a versioned pilot demographic baseline and Schedule-of-Rates costing. A Maker-Checker design has an advocate propose projects and an independent PolicyAuditor verify the math, rate-card consistency and common PII leaks before issuing a tamper-evident demo SEAL. Policymakers get ranked demand hotspots with auditable justification, built for supervised pilots.
 
 ---
 
@@ -54,7 +54,7 @@ Same input always gives the same score, so policymakers can defend every ranking
 
 | Layer | Handled by | Why |
 |---|---|---|
-| Multilingual response generation & policy memo drafting (Hindi, Tamil, Telugu, Bengali, Marathi, Portuguese, English) | **Google Gemini 2.5 Flash (fallbacks: 2.0 Flash, 1.5 Pro)** | Generative, language-sensitive contextual synthesis adapted to regional administrative vernacular |
+| Multilingual response generation & policy memo drafting (Hindi, Tamil, Telugu, Bengali, Marathi, Portuguese, English) | **Google Gemini 2.5 Flash → 2.0 Flash → 1.5 Pro** | Generative, language-sensitive contextual synthesis adapted to regional administrative vernacular |
 | Citizen voice transcription | **Browser Web Speech API / WhatsApp voice channel** | Speech-to-text converted client-side before ingestion |
 | Intent extraction, category classification, urgency detection | **Deterministic Python + Gemini** | Keyword and regex matching with LLM augmentation |
 | PII redaction (Aadhaar, phone, email) | **Deterministic Python** (`citizen_ingest_sanitizer.py`) | Regex-based redaction runs *before* any model call; zero model discretion |
@@ -71,11 +71,11 @@ Same input always gives the same score, so policymakers can defend every ranking
 1. **Voice note (Hindi):** A resident of Katihar records a voice note (transcribed via client speech recognition / WhatsApp voice message) reporting contaminated drinking water and pipeline leaks in Barari village, including their personal phone number (`+91 98765 43210`) and Aadhaar (`4589-1234-5678`).
 2. **Ingestion & Classification:** Language detected as Hindi (`hi`); intent classified as *Water & Sanitation*; aggregated with 34 related demand signals from the same block.
 3. **PII scrub (before any model call):** The deterministic sanitizer strips phone and Aadhaar to `[PHONE_REDACTED]` and `[NATIONAL_ID_REDACTED]`. Zero sensitive tokens reach Gemini or logs.
-4. **Census/MPI correlation:** Katihar matched to baseline (`IND-BR-01`): Multi-dimensional Poverty Index (MPI) **0.428**, water coverage deficit **47.6%**, classified as an Aspirational District (`CERTIFIED_FOR_GOVERNMENT_ALLOCATION`).
+4. **Demographic correlation:** Katihar matched to the versioned pilot baseline (`IND-BR-01`): Multi-dimensional Poverty Index (MPI) **0.428**, water coverage deficit **47.6%**. The resulting recommendation remains provisional pending human officer review.
 5. **PUS scoring:** Demand volume (34/50) + MPI (0.428) + Water deficit (0.476) → **PUS = 53.1 / 100**, placing it in Tier-2 High-Priority Capital Works.
 6. **Costing:** Optimizer maps the need to an SoR-priced public work: **Solar-powered Borewell + RO/UV Treatment Plant, ₹8.5 Lakhs** ($10,180 USD), benefiting 2,500 citizens with a Benefit-to-Cost Ratio (BCR) of 294.12.
 7. **Maker (CitizenAdvocate with Gemini 2.5 Flash):** Drafts the proposal and a personalized **Hindi acknowledgment** back to the citizen (`"नमस्ते। आपकी पेयजल एवं स्वच्छता संबंधी मांग जनसेतु प्रणाली में दर्ज कर ली गई है..."`).
-8. **Checker (PolicyAuditor):** Independently re-computes the PUS formula, verifies budget ceiling, confirms zero PII leakage, validates baseline certification status, and generates a tamper-evident **HMAC-SHA256 seal** (`SEAL-33BAFD9478427850`, production deployments supply the signing key via `JANSETU_AUDIT_KEY` / Cloud KMS) with 0.98 confidence.
+8. **Checker (PolicyAuditor):** Independently re-computes the PUS formula, validates the selected demo rate-card item, scans common PII patterns, and generates a tamper-evident **HMAC-SHA256 demo seal** (`SEAL-33BAFD9478427850`, production deployments supply the signing key via `JANSETU_AUDIT_KEY` / Cloud KMS). A human officer remains required for allocation.
 9. **Policymaker dashboard:** District Magistrate sees the live geospatial hotspot, formulaic score breakdown, costed SoR project, and tamper-evident seal.
 
 **Outcome:** A fragmented Hindi voice note becomes an auditable, budget-aligned capital works proposal, and the citizen receives immediate reassurance in their native tongue.
@@ -87,5 +87,5 @@ Same input always gives the same score, so policymakers can defend every ranking
 - **MeitY DPG alignment:** Open source (Apache 2.0), reusable, standards-based (OpenGAP, MCP-compatible tool schemas), privacy-by-design, with `compliance/` documentation covering Responsible AI and Digital Public Good criteria.
 - **Aspirational Districts:** Directs capital expenditure to districts where deprivation is highest and voice access is often the *only* accessible channel, ensuring the most vulnerable citizens are heard.
 - **Spending accountability:** Directly connects citizen demand to deprivation data and costed works, giving governments a measurable path from "request" to "investment" to "impact."
-- **Trust by design:** Zero-PII guardrails, deterministic math, and a Maker-Checker seal eliminate hallucinated public works allocations.
+- **Trust by design:** Edge redaction, deterministic math, rate-card checks and a Maker-Checker seal reduce unsupported public works recommendations; final allocation remains human-controlled.
 - **BRICS scale:** Baseline census files and Schedule of Rates are swappable per country; Portuguese support is already tested for Juazeiro, Brazil, allowing one framework to serve districts, municipalities, and partner nations without re-architecting.
